@@ -1,0 +1,4 @@
+TEMPLATE_ID=TPL_SQL_PARAM_QUERY_V1
+ISSUE_TYPE=SQL_INJECTION_UNSAFE_QUERY_CONCAT
+PATCH_LINE_1=query = "SELECT * FROM users WHERE username = %s"
+PATCH_LINE_2=cursor.execute(query, (username,))
