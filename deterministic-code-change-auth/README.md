@@ -1,116 +1,179 @@
-# Deterministic Code Change Authorization System
+## Core Idea
 
-**Forces every code change to prove itself before it gets merged.**
+The system authorizes code changes through replay-verified behavioral equivalence:
 
-This is an execution-based authorization system, not a probabilistic suggestion tool.
+1. Execute a trusted reference baseline  
+2. Replay the modified code under controlled conditions  
+3. Normalize non-functional noise (timestamps, IDs, randomness)  
+4. Compare behavior at a defined comparison surface  
+5. Generate a deterministic decision  
 
----
+PR / Patch
+↓
+Reference Execution
+↓
+Replay Execution
+↓
+Output Normalization
+↓
+Behavioral Comparison
+↓
+ALLOW / BLOCK / UNVERIFIABLE
 
-## What This System Does
-- Replays code changes under controlled execution  
-- Compares behavior against a trusted reference  
-- Enforces deterministic authorization decisions  
 
----
-
-## Outputs
-- ✅ ALLOW — behavior verified  
-- ❌ BLOCK — behavior diverges  
-- ⚫ UNVERIFIABLE — cannot prove correctness  
-
----
-
-## Demo
-Demo will be added here.
-
----
-
-## Why Now
-
-As AI systems increasingly generate code, the volume of changes is outpacing human review capacity. This creates a gap where correctness is assumed, not verified.
-
-This system introduces a deterministic authorization layer to ensure code changes are proven under execution before being allowed.
-
-This shift becomes critical as code generation scales faster than human validation capacity.
 
 ---
 
-## Decision Boundary
+## Decision Model
 
-- ALLOW → behavior is provably equivalent  
-- BLOCK → behavior diverges  
-- UNVERIFIABLE → determinism is insufficient  
+- **ALLOW** → behavior matches exactly  
+- **BLOCK** → behavior diverges  
+- **UNVERIFIABLE** → determinism cannot be guaranteed  
 
-The system prioritizes provable correctness over coverage.
-
----
-
-## Comparison
-
-| System | What it does | Core Limitation |
-|--------|--------------|----------------|
-| Static Analysis | Detects risky patterns | No execution-level proof |
-| Tests | Validate predefined scenarios | Incomplete behavioral coverage |
-| LLM Tools | Suggest fixes | Non-deterministic, non-reproducible |
-| This System | Enforces execution equivalence | Requires reproducible environments |
+This system does not hide uncertainty — it enforces it.
 
 ---
 
-## CI/CD Integration
+## System Guarantees
 
-PR → Tests → Replay Authorization → Merge Gate → Deploy
+- **Deterministic decision boundary**  
+  Same input + same environment → same decision  
 
-This system operates as a pre-merge authorization gate after tests but before deployment.
+- **Execution-backed authorization**  
+  No execution proof → no approval  
 
-This transforms CI/CD from a validation pipeline into an enforcement pipeline.
+- **No forced decisions**  
+  If determinism fails → UNVERIFIABLE  
+
+- **Full auditability**  
+  Every decision is reproducible  
+
+---
+
+## Decision Philosophy
+
+This system is intentionally asymmetric:
+
+- Easy to BLOCK  
+- Hard to ALLOW  
+- Acceptable to return UNVERIFIABLE  
+
+Correctness is prioritized over coverage.
+
+---
+
+## Examples
+
+### ALLOW
+A defensive null check is added, but behavior remains identical for the same inputs.  
+→ **ALLOW**
+
+### BLOCK
+A business logic threshold changes, altering outputs.  
+→ **BLOCK**
+
+### UNVERIFIABLE
+Code depends on UUIDs or timestamps, making outputs non-deterministic.  
+→ **UNVERIFIABLE**
 
 ---
 
 ## Controlled Evaluation
 
-Evaluated on 36 controlled scenarios:
+Evaluated on **36 controlled scenarios**:
 
-- 12 ALLOW  
-- 12 BLOCK  
-- 12 UNVERIFIABLE  
+| Outcome        | Count | Meaning                        |
+|----------------|------:|--------------------------------|
+| ALLOW          | 12    | Behavior preserved             |
+| BLOCK          | 12    | Behavioral divergence detected |
+| UNVERIFIABLE   | 12    | Determinism not achievable     |
 
-The objective was not to maximize approval rate, but to validate the integrity of the system’s decision boundary under controlled conditions.
+**Goal:** validate decision integrity, not maximize approval rate.
 
 ---
 
-## Early Failure Insight
+## What This Proves
 
-In early iterations, normalization removed output differences that appeared non-critical but actually masked meaningful behavioral changes.
+- Deterministic changes can be safely authorized  
+- Behavioral divergence is reliably detected  
+- Uncertainty is explicitly surfaced instead of hidden  
 
-This introduced the risk of false ALLOW decisions.
+---
 
-The system was corrected by tightening the comparison surface and explicitly defining authoritative outputs, making it stricter but significantly more reliable.
+## What This Does Not Prove
+
+- Universal correctness across all systems  
+- Full production scalability across all environments  
+- Applicability to inherently non-deterministic systems  
+
+---
+
+## CI/CD Integration
+
+This system operates as a **pre-merge authorization gate**:
+
+PR → Tests → Authorization Gate → Merge
+
+
+- **ALLOW** → merge proceeds  
+- **BLOCK** → merge is rejected  
+- **UNVERIFIABLE** → manual review required  
+
+This transforms CI/CD from **validation → enforcement**.
 
 ---
 
 ## Where This System Should Not Be Used
 
 - Highly non-deterministic systems  
-- Distributed systems with external side effects  
-- Real-time systems with strict latency constraints  
-- Environments that cannot be reproduced  
+- Distributed systems with uncontrolled external dependencies  
+- Real-time systems where timing is part of correctness  
+- Environments that cannot be reliably reproduced  
 
-This system is designed for correctness-critical paths, not universal enforcement.
-
----
-
-## High-Stakes Example
-
-In a financial system, a small change in rounding logic could silently alter transaction values while still passing tests.
-
-This system would detect that behavioral divergence under replay and block the change before it reaches production.
+In these cases, returning **UNVERIFIABLE** is correct behavior.
 
 ---
 
-## Final Positioning
+## Failure Insight
 
-This system does not attempt to guess correctness.
+In early iterations, normalization removed output differences that appeared non-critical but actually masked real behavioral changes.
 
-It enforces a simple rule:
+This introduced the risk of false ALLOW decisions.
 
-If correctness cannot be proven under execution, the change is not allowed.
+**Fix:**
+- Tightened comparison surface  
+- Explicitly defined authoritative outputs  
+
+**Lesson:**  
+Over-normalization can create false equivalence.  
+Verification boundaries must be strictly defined.
+
+---
+
+## Why This Matters Now
+
+AI systems are generating code faster than humans can reliably review it.
+
+Confidence-based validation does not scale.
+
+This system introduces:
+
+- deterministic verification  
+- enforceable decision boundaries  
+- audit-ready authorization  
+
+**As code generation scales, validation must shift from confidence to proof.**
+
+---
+
+## Positioning
+
+This is not:
+
+- a code generation tool  
+- an AI reviewer  
+- a probabilistic analysis system  
+
+This is:
+
+**A deterministic authorization layer for code changes**
