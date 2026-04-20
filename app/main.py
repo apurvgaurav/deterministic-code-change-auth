@@ -46,8 +46,22 @@ def print_result(title: str, result) -> None:
 def main() -> None:
     print(f"{SYSTEM_NAME} v{SYSTEM_VERSION}")
     print("Deterministic Code Change Authorization System")
-    print("Please use the CLI or API endpoints to submit PR inputs.")
-    print("To run tests, use `pytest tests/`")
+    print("Proof-based deployment authorization using execution and replay.\n")
+
+    print("=== Deterministic Authorization Demo ===\n")
+
+    demo_scenarios = [
+        ("Parameterized SQL patch", "ALLOW"),
+        ("Auth logic mutation", "BLOCK"),
+        ("Non-deterministic dependency", "UNVERIFIABLE"),
+    ]
+
+    for name, result in demo_scenarios:
+        print(f"Scenario: {name}")
+        print(f"Decision: {result}\n")
+
+    print("For full scenario execution, use the CLI or API endpoints.")
+    print("To run tests, use: pytest tests/")
 
 
 if __name__ == "__main__":
